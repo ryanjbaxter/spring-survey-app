@@ -1,5 +1,7 @@
 package com.vmware.tanzu.ui.view;
 
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -20,12 +22,12 @@ import com.vmware.tanzu.ui.client.BackendClient;
 import com.vmware.tanzu.ui.model.PollQuestion;
 import com.vmware.tanzu.ui.model.PollResponse;
 import com.vmware.tanzu.ui.model.ResultsUpdatedEvent;
-import jakarta.annotation.PostConstruct;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 @Route("")
 public class PollView extends VerticalLayout {
@@ -35,6 +37,7 @@ public class PollView extends VerticalLayout {
     private final Map<String, Chart> charts = new HashMap<>();
     private final VerticalLayout pollsContainer = new VerticalLayout();
     private final VerticalLayout resultsContainer = new VerticalLayout();
+    private final Consumer<ResultsUpdatedEvent> resultsListener = this::updateChart;
 
     public PollView(BackendClient backendClient) {
         this.backendClient = backendClient;
@@ -65,10 +68,17 @@ public class PollView extends VerticalLayout {
         add(pollsHeader, pollsContainer, resultsHeader, resultsContainer);
     }
 
-    @PostConstruct
-    public void init() {
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
         loadQuestions();
-        subscribeToResults();
+        backendClient.addResultsListener(resultsListener);
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        backendClient.removeResultsListener(resultsListener);
+        super.onDetach(detachEvent);
     }
 
     private void loadQuestions() {
@@ -156,10 +166,6 @@ public class PollView extends VerticalLayout {
         charts.put(question.id(), chart);
         chartLayout.add(chartTitle, chart);
         resultsContainer.add(chartLayout);
-    }
-
-    private void subscribeToResults() {
-        backendClient.streamResults(this::updateChart);
     }
 
     private void updateChart(ResultsUpdatedEvent event) {
