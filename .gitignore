@@ -13,6 +13,18 @@ buildNumber.properties
 # Spring Boot
 *.log
 spring-shell.log
+HELP.md
+
+# Node / npm
+node_modules/
+package-lock.json
+
+# Vaadin generated files
+**/frontend/generated/
+**/src/main/bundles/
+vite.generated.ts
+.editorconfig
+.eslintrc
 
 # IDE - IntelliJ
 .idea/
@@ -30,6 +42,9 @@ bin/
 # IDE - VS Code
 .vscode/
 
+# Claude Code
+.claude/
+
 # OS files
 .DS_Store
 Thumbs.db
@@ -44,6 +59,9 @@ Thumbs.db
 *.zip
 *.tar.gz
 *.rar
+
+# Database
+*.db
 
 # Environment / secrets
 .env

@@ -6,30 +6,30 @@ Complete working Spring Cloud microservices demo application built for the DevNe
 
 ## What's Included
 
-### ✅ 6 Microservices
+### 7 Microservices
 
 1. **eureka-server** - Service discovery registry (Netflix Eureka)
 2. **config-server** - Centralized configuration management
 3. **gateway** - API Gateway with load balancing (Spring Cloud Gateway)
 4. **poll-service** - Handles poll submissions, publishes to RabbitMQ Stream
-5. **results-service** - Consumes events, aggregates results, streams via SSE
-6. **poll-ui** - Vaadin-based frontend with real-time chart updates
+5. **results-service** - Consumes events, aggregates results, serves via REST
+6. **poll-ui** - Vaadin-based frontend (legacy, kept for reference)
+7. **poll-ui-js** - Plain HTML/JS + Chart.js frontend (active)
 
-### ✅ Spring Cloud Features Demonstrated
+### Spring Cloud Features Demonstrated
 
-- ✓ Service Discovery (Eureka)
-- ✓ Centralized Config (Config Server)
-- ✓ Client-Side Load Balancing (Spring Cloud LoadBalancer)
-- ✓ API Gateway (Spring Cloud Gateway)
-- ✓ Event-Driven Messaging (Spring Cloud Stream + RabbitMQ)
-- ✓ Circuit Breaker (Resilience4j)
-- ✓ Real-time updates (Server-Sent Events)
+- Service Discovery (Eureka)
+- Centralized Config (Config Server)
+- Client-Side Load Balancing (Spring Cloud LoadBalancer)
+- API Gateway (Spring Cloud Gateway)
+- Event-Driven Messaging (Spring Cloud Stream + RabbitMQ)
+- Circuit Breaker (Resilience4j)
 
-### ✅ Technologies Used
+### Technologies Used
 
 - Spring Boot 4.0.2
 - Spring Cloud 2025.1.1
-- Vaadin 24.5.4
+- Chart.js 4 (via CDN)
 - RabbitMQ (via Spring Cloud Stream)
 - H2 Database (in-memory)
 - Netflix Eureka
@@ -41,30 +41,44 @@ Complete working Spring Cloud microservices demo application built for the DevNe
 poll-demo-oss/
 ├── pom.xml                    # Parent POM
 ├── README.md                  # Full documentation
-├── start-all.sh              # Startup script
-├── eureka-server/            # Service discovery
-├── config-server/            # Configuration management
+├── start-all.sh               # Startup script
+├── eureka-server/             # Service discovery
+├── config-server/             # Configuration management
 │   └── src/main/resources/config/
 │       ├── poll-service.properties    # Poll questions config
 │       └── results-service.properties # Database config
-├── gateway/                  # API Gateway
-├── poll-service/            # Poll submission service
-│   ├── model/               # PollResponse, PollQuestions
-│   ├── repository/          # JPA repository
-│   ├── service/             # Business logic
-│   ├── controller/          # REST endpoints
-│   └── event/               # PollSubmittedEvent
-├── results-service/         # Results aggregation service
-│   ├── model/               # PollResults
-│   ├── repository/          # JPA repository
-│   ├── service/             # Stream consumer, SSE publisher
-│   ├── controller/          # REST + SSE endpoints
-│   └── event/               # ResultsUpdatedEvent
-└── poll-ui/                 # Vaadin frontend
-    ├── model/               # DTOs
-    ├── client/              # WebClient to backend
-    └── view/                # Vaadin UI components
-
+├── gateway/                   # API Gateway
+├── poll-service/              # Poll submission service
+│   ├── model/                 # PollResponse, PollQuestions
+│   ├── repository/            # JPA repository
+│   ├── service/               # Business logic + StreamBridge
+│   ├── controller/            # REST endpoints
+│   └── event/                 # PollSubmittedEvent
+├── results-service/           # Results aggregation service
+│   ├── model/                 # PollResults
+│   ├── repository/            # JPA repository
+│   ├── service/               # Stream consumer
+│   ├── controller/            # REST endpoint
+│   └── event/                 # PollSubmittedEvent (consumer)
+├── poll-ui/                   # Vaadin frontend (legacy)
+│   ├── model/                 # DTOs
+│   ├── client/                # Backend client
+│   └── view/                  # Vaadin UI components
+└── poll-ui-js/                # Plain HTML/JS frontend (active)
+    └── src/main/
+        ├── java/.../uijs/
+        │   ├── PollUIJSApplication.java  # Spring Boot app
+        │   ├── ApiProxyController.java   # REST proxy to gateway
+        │   └── WebConfig.java            # View controller for /results
+        └── resources/
+            ├── application.properties
+            └── static/
+                ├── index.html            # Survey page (/)
+                ├── results.html          # Live results page (/results)
+                ├── css/style.css         # Spring-green themed styles
+                └── js/
+                    ├── poll.js           # Survey form logic
+                    └── results.js        # Chart.js polling logic
 ```
 
 ## Quick Start
@@ -74,9 +88,9 @@ poll-demo-oss/
 docker run -d --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3-management
 
 # 2. Build all services
-mvn clean install
+./mvnw clean install
 
-# 3. Use the startup script (macOS/Linux with gnome-terminal)
+# 3. Use the startup script (macOS/Linux)
 ./start-all.sh
 
 # OR start services manually (see README.md for order)
@@ -84,7 +98,10 @@ mvn clean install
 
 ## Access Points
 
-- **Poll UI**: http://localhost:8090
+- **Poll UI (JS)**: http://localhost:8091
+- **Poll UI (JS) - Survey**: http://localhost:8091/
+- **Poll UI (JS) - Results**: http://localhost:8091/results
+- **Poll UI (Vaadin, legacy)**: http://localhost:8090
 - **Eureka Dashboard**: http://localhost:8761
 - **RabbitMQ Management**: http://localhost:15672 (guest/guest)
 - **API Gateway**: http://localhost:8080
@@ -92,11 +109,12 @@ mvn clean install
 ## Demo Flow
 
 1. **Show Service Discovery** - Open Eureka dashboard, show all registered services
-2. **Submit Polls** - Open UI, submit answers, watch charts update in real-time
-3. **Show Load Balancing** - Check logs, see requests distributed across poll-service instances
-4. **Show Event Streaming** - Open RabbitMQ management, watch messages flow
-5. **Show Circuit Breaker** - Kill results-service, show graceful degradation
-6. **Highlight Production Gaps** - No auth, no rate limiting, manual setup required
+2. **Submit Polls** - Open survey page, submit answers
+3. **Show Live Results** - Open results page, watch charts update every 2 seconds
+4. **Show Load Balancing** - Check logs, see requests distributed across poll-service instances
+5. **Show Event Streaming** - Open RabbitMQ management, watch messages flow
+6. **Show Circuit Breaker** - Kill results-service, show graceful degradation
+7. **Highlight Production Gaps** - No auth, no rate limiting, manual setup required
 
 ## Poll Questions (Configurable)
 
@@ -109,31 +127,29 @@ Defined in `config-server/src/main/resources/config/poll-service.properties`:
 ## Event Flow
 
 ```
-User submits poll
+User submits poll answer
     ↓
-Vaadin UI → Gateway → Poll Service
+Browser → poll-ui-js proxy → Gateway → Poll Service
     ↓
-Poll Service writes to DB
+Poll Service writes to DB + publishes PollSubmittedEvent to RabbitMQ
     ↓
-Poll Service publishes PollSubmittedEvent to RabbitMQ
+Results Service consumes event from RabbitMQ
     ↓
-Results Service consumes event
+Results Service aggregates and saves to DB
     ↓
-Results Service aggregates stats
+Browser polls GET /api/results/{questionId} every 2 seconds
     ↓
-Results Service publishes ResultsUpdatedEvent
-    ↓
-Vaadin UI receives SSE update → Chart updates in real-time
+Chart.js updates bar charts with new data
 ```
 
 ## Production Gaps (To Highlight in Demo)
 
-- ❌ No authentication/authorization
-- ❌ No rate limiting
-- ❌ Manual infrastructure setup (Eureka, Config Server, RabbitMQ)
-- ❌ No centralized secrets management
-- ❌ No unified observability dashboard
-- ❌ DIY circuit breaker configuration
+- No authentication/authorization
+- No rate limiting
+- Manual infrastructure setup (Eureka, Config Server, RabbitMQ)
+- No centralized secrets management
+- No unified observability dashboard
+- DIY circuit breaker configuration
 
 These gaps are addressed in **Demo 2** with VMware Tanzu Platform.
 

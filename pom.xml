@@ -19,7 +19,7 @@
         <module>gateway</module>
         <module>poll-service</module>
         <module>results-service</module>
-        <module>poll-ui</module>
+        <module>poll-ui-js</module>
     </modules>
 
     <parent>
