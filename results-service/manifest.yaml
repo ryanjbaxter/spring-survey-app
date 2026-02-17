@@ -7,7 +7,6 @@ applications:
       - service-registry
       - rabbit
       - postgres
-      - gateway
     path: target/results-service-1.0.0-SNAPSHOT.jar
     buildpacks:
       - java_buildpack_offline
