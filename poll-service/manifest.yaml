@@ -1,0 +1,13 @@
+---
+applications:
+  - name: poll-service
+    memory: 1G
+    services:
+      - config-server
+      - service-registry
+      - rabbit
+      - postgres
+    path: target/poll-service-1.0.0-SNAPSHOT.jar
+    env:
+      BP_JVM_VERSION: 25
+      JBP_CONFIG_OPEN_JDK_JRE: '{ jre: { version: 25.+ } }'
