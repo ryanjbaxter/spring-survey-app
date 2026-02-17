@@ -16,9 +16,8 @@ public class ResultsController {
     }
 
     @GetMapping("/{questionId}")
-    public ResponseEntity<PollResults> getResults(@PathVariable String questionId) {
+    public PollResults getResults(@PathVariable String questionId) {
         return resultsAggregator.getResults(questionId)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+            .orElse(new PollResults(questionId));
     }
 }
