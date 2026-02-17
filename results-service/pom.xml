@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.vmware.tanzu</groupId>
+        <groupId>io.spring.sample</groupId>
         <artifactId>poll-demo-oss</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
