@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/results")
+@RequestMapping("/")
 public class ResultsController {
 
     private final ResultsAggregator resultsAggregator;

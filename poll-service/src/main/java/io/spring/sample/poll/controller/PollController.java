@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/polls")
+@RequestMapping("/")
 public class PollController {
 
     private static final Logger log = LoggerFactory.getLogger(PollController.class);
