@@ -12,6 +12,6 @@ applications:
     buildpacks:
       - java_buildpack_offline
     routes:
-      - route: poll-service.apps.internal
+      - route: results-service.apps.internal
     env:
       JBP_CONFIG_OPEN_JDK_JRE: '{ jre: { version: 25.+ } }'
