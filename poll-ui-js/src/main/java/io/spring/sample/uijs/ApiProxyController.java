@@ -23,7 +23,7 @@ public class ApiProxyController {
     @GetMapping("/api/polls/questions")
     public ResponseEntity<String> getQuestions() {
         String body = gatewayClient.get()
-                .uri("/polls-service/questions")
+                .uri("/poll-service/questions")
                 .retrieve()
                 .body(String.class);
         return ResponseEntity.ok()
@@ -34,7 +34,7 @@ public class ApiProxyController {
     @PostMapping("/api/polls/submit")
     public ResponseEntity<String> submitPoll(@RequestBody Map<String, Object> payload) {
         String body = gatewayClient.post()
-                .uri("/polls-service/submit")
+                .uri("/poll-service/submit")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(payload)
                 .retrieve()
