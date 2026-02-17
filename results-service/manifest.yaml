@@ -7,7 +7,11 @@ applications:
       - service-registry
       - rabbit
       - postgres
+      - gateway
     path: target/results-service-1.0.0-SNAPSHOT.jar
+    buildpacks:
+      - java_buildpack_offline
+    routes:
+      - route: poll-service.apps.internal
     env:
-      BP_JVM_VERSION: 25
       JBP_CONFIG_OPEN_JDK_JRE: '{ jre: { version: 25.+ } }'

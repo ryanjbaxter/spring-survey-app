@@ -3,6 +3,7 @@ applications:
   - name: poll-ui-js
     memory: 1G
     path: target/poll-ui-js-1.0.0-SNAPSHOT.jar
+    buildpacks:
+      - java_buildpack_offline
     env:
-      BP_JVM_VERSION: 25
       JBP_CONFIG_OPEN_JDK_JRE: '{ jre: { version: 25.+ } }'
