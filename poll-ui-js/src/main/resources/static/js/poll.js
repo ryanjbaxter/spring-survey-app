@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    var API_POLLS = '/api/polls';
+    var API_POLLS = '/poll-service';
     var userId = crypto.randomUUID();
     var pollsContainer = document.getElementById('polls-container');
 
