@@ -29,4 +29,5 @@ cd poll-ui-js
 ```
 cf bind-service results-service gateway -c '{ "routes": [ { "path": "/results-service/**" } ] }'
 cf bind-service poll-service gateway -c '{ "routes": [ { "path": "/poll-service/**" } ] }' 
+cf bind-service poll-ui-js gateway -c '{ "routes": [ { "path": "/**", "order": 999, "filters": [ "StripPrefix=0" ] } ] }'
 ```
