@@ -5,15 +5,25 @@ Real-time polling application demonstrating Spring Cloud OSS capabilities for th
 ## Architecture
 
 ```
-Browser (Chart.js)  ←  poll-ui-js (proxy)  →  Gateway  →  Poll Service  →  RabbitMQ
-         ↑ polling                                              ↓            ↓
-         └──────────────────────────────────────────── Results Service  ←  (poll-events)
-                                                              ↓
-                                                         H2 Database
+                                    ┌─────────────────────────────────────────────────┐
+                                    │                   Gateway (8080)                │
+                                    │  ┌─────────────────────────────────────────┐    │
+Browser (Chart.js) ─────────────────┼──│  /poll-service/**    → Poll Service     │────┼──→ RabbitMQ
+         ↑ polling                  │  │  /results-service/** → Results Service  │    │       ↓
+         │                          │  │  /**                  → poll-ui-js       │    │  (poll-events)
+         │                          │  └─────────────────────────────────────────┘    │       ↓
+         │                          └─────────────────────────────────────────────────┘  Results Service
+         │                                                                                     ↓
+         └─────────────────────────────────────────────────────────────────────────────  H2 Database
 
                      Eureka Server  ←  all services register here
                      Config Server  ←  poll-service, results-service pull config
 ```
+
+All traffic flows through the Gateway on port 8080. The Gateway routes requests based on path:
+- `/poll-service/**` → Poll Service (load balanced)
+- `/results-service/**` → Results Service
+- `/**` (catch-all) → poll-ui-js static content
 
 ## Components
 
@@ -24,7 +34,7 @@ Browser (Chart.js)  ←  poll-ui-js (proxy)  →  Gateway  →  Poll Service  �
 | **Gateway** | 8080 | API Gateway with load balancing (Spring Cloud Gateway) |
 | **Poll Service** | 8081 (8082) | Handles poll submissions, publishes events to RabbitMQ |
 | **Results Service** | 8083 | Consumes events, aggregates results, serves via REST |
-| **Poll UI (JS)** | 8091 | Plain HTML/JS + Chart.js frontend (active) |
+| **Poll UI (JS)** | 8091 | Plain HTML/JS + Chart.js frontend (served via Gateway) |
 | **Poll UI (Vaadin)** | 8090 | Vaadin-based frontend (legacy, kept for reference) |
 
 ## Spring Cloud Features Demonstrated
@@ -98,17 +108,19 @@ Or use the startup script (macOS/Linux):
 
 ### 4. Access the Application
 
-- **Survey Page**: http://localhost:8091
-- **Live Results**: http://localhost:8091/results
+- **Survey Page**: http://localhost:8080 (via Gateway)
+- **Live Results**: http://localhost:8080/results (via Gateway)
 - **Eureka Dashboard**: http://localhost:8761
 - **RabbitMQ Management**: http://localhost:15672
+
+> **Note:** All user-facing traffic goes through the Gateway on port 8080. The poll-ui-js service (port 8091) is accessed indirectly via the Gateway's catch-all route.
 
 ## Event Flow
 
 ```
 User submits poll answer
     ↓
-Browser → poll-ui-js proxy → Gateway → Poll Service
+Browser → Gateway (8080) → /poll-service/submit → Poll Service
     ↓
 Poll Service writes to DB + publishes PollSubmittedEvent to RabbitMQ
     ↓
@@ -116,7 +128,7 @@ Results Service consumes event from RabbitMQ (poll-events topic)
     ↓
 Results Service aggregates and saves to DB
     ↓
-Browser polls GET /api/results/{questionId} every 2 seconds
+Browser polls GET /results-service/{questionId} via Gateway every 2 seconds
     ↓
 Chart.js updates horizontal bar charts with new data
 ```
@@ -131,9 +143,9 @@ Chart.js updates horizontal bar charts with new data
 
 ### 2. Submit Polls & Show Live Results
 
-1. Open the Survey page (http://localhost:8091)
+1. Open the Survey page (http://localhost:8080)
 2. Submit a poll response
-3. Open the Results page (http://localhost:8091/results) in another tab
+3. Open the Results page (http://localhost:8080/results) in another tab
 4. Watch the bar charts update every 2 seconds via polling
 5. Submit more responses — charts update automatically
 
@@ -173,20 +185,21 @@ To add/modify questions, edit the file and restart poll-service (or use `/actuat
 
 ## Frontend Architecture (poll-ui-js)
 
-The active frontend is a plain HTML/JS application served by a Spring Boot backend:
+The active frontend is a plain HTML/JS application served behind the Gateway:
 
 - **Survey page** (`/`) — Radio button forms for each poll question
 - **Results page** (`/results`) — Live Chart.js horizontal bar charts
-- **API proxy** — `ApiProxyController` proxies REST calls through the gateway using a `@LoadBalanced` `RestClient`
+- **Direct API calls** — JavaScript calls backend services directly via Gateway routes (`/poll-service/*`, `/results-service/*`)
 - **Polling** — Results page polls each question's results every 2 seconds
 - **Chart.js 4** — Loaded via CDN, renders horizontal bar charts with Spring green theme
+
+The poll-ui-js service is a simple static content server. All API routing and load balancing is handled by the Gateway, eliminating the need for a backend proxy layer.
 
 ```
 poll-ui-js/
 └── src/main/
     ├── java/.../uijs/
-    │   ├── PollUIJSApplication.java  # Spring Boot app + @LoadBalanced RestClient
-    │   ├── ApiProxyController.java   # REST proxy to gateway
+    │   ├── PollUIJSApplication.java  # Spring Boot app with Eureka discovery
     │   └── WebConfig.java            # View controller for /results
     └── resources/
         ├── application.properties
@@ -195,9 +208,19 @@ poll-ui-js/
             ├── results.html          # Live results page (/results)
             ├── css/style.css         # Spring-green themed styles
             └── js/
-                ├── poll.js           # Survey form logic
-                └── results.js        # Chart.js polling logic
+                ├── poll.js           # Survey form logic (calls /poll-service/*)
+                └── results.js        # Chart.js polling logic (calls /results-service/*)
 ```
+
+### Gateway Routes
+
+The Gateway routes all traffic with the following priority:
+
+| Route | Path Pattern | Target | Notes |
+|-------|--------------|--------|-------|
+| poll-service | `/poll-service/**` | lb://poll-service | StripPrefix=1, load balanced |
+| results-service | `/results-service/**` | lb://results-service | StripPrefix=1 |
+| poll-ui-js | `/**` | lb://poll-ui-js | order=999 (catch-all) |
 
 ## Production Gaps Highlighted
 
@@ -226,7 +249,7 @@ These gaps are addressed in Demo 2 with VMware Tanzu Platform.
 **Results not updating:**
 - Verify results-service is running
 - Check RabbitMQ is running and the `poll-events` exchange exists
-- Open browser dev tools Network tab — confirm `/api/results/{id}` requests return data
+- Open browser dev tools Network tab — confirm `/results-service/{id}` requests return data
 
 **Load balancing not working:**
 - Ensure both poll-service instances registered in Eureka

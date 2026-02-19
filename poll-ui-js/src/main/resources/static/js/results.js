@@ -1,8 +1,8 @@
 (function () {
     'use strict';
 
-    var API_POLLS = '/api/polls';
-    var API_RESULTS = '/api/results';
+    var API_POLLS = '/poll-service';
+    var API_RESULTS = '/results-service';
     var POLL_INTERVAL = 2000;
 
     var charts = {};
