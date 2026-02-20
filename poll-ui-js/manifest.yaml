@@ -5,5 +5,7 @@ applications:
     path: target/poll-ui-js-1.0.0-SNAPSHOT.jar
     buildpacks:
       - java_buildpack_offline
+    routes:
+      - route: poll-ui-js.apps.internal
     env:
       JBP_CONFIG_OPEN_JDK_JRE: '{ jre: { version: 25.+ } }'
