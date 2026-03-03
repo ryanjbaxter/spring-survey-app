@@ -14,9 +14,6 @@
     <description>Real-time polling application demonstrating Spring Cloud OSS</description>
 
     <modules>
-        <module>eureka-server</module>
-        <module>config-server</module>
-        <module>gateway</module>
         <module>poll-service</module>
         <module>results-service</module>
         <module>poll-ui-js</module>
