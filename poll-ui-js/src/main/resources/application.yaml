@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: poll-ui-js
+
+eureka:
+  client:
+    enabled: false
+
+logging:
+  level:
+    io.spring.sample: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-cloud-platform: none
+
+server:
+  port: 8091
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    webclient:
+      enabled: true
+  instance:
+    prefer-ip-address: true
