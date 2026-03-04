@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: results-service
+  # Config Server
+  config:
+    import: optional:configserver:http://localhost:8888
+  # Database
+  datasource:
+    url: jdbc:h2:mem:results
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  h2:
+    console:
+      enabled: true
+  # RabbitMQ
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+  # Spring Cloud Stream
+  cloud:
+    function:
+      definition: pollSubmitted
+    stream:
+      bindings:
+        pollSubmitted-in-0:
+          destination: poll-events
+          group: results-service
+          content-type: application/json
+
+server:
+  port: 8083
+
+# Eureka
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+# Logging
+logging:
+  level:
+    io.spring.sample: DEBUG
