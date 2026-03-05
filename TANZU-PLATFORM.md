@@ -4,9 +4,17 @@
 
 ```
 cf create-service p.config-server standard config-server -c '{"git": { "uri": "https://github.com/ryanjbaxter/spring-survey-app", "label": "config"} }'
-```
 
-TODO: Add other services
+cf create-service postgres on-demand-postgres-db postgres -w
+
+cf create-service p.service-registry standard service-registry
+
+cf create-service p.rabbitmq on-demand-plan rabbit 
+
+cf create-service p.gateway standard gateway
+
+cf create-service p-identity uaa sso
+```
 
 ## Deploy Apps
 
